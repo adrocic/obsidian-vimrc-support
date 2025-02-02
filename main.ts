@@ -7,6 +7,7 @@ import { jumpToNextHeading, jumpToPreviousHeading } from './motions/jumpToHeadin
 import { jumpToNextLink, jumpToPreviousLink } from './motions/jumpToLink';
 import { defineAndMapObsidianVimAction, defineAndMapObsidianVimMotion } from './utils/obsidianVimCommand';
 import { VimApi } from './utils/vimApi';
+import { Editor } from 'codemirror';
 
 declare const CodeMirror: any;
 
@@ -176,11 +177,11 @@ export default class VimrcPlugin extends Plugin {
 	}
 
 	async updateVimEvents() {
-		if (!(this.app as Any).isVimEnabled())
+		if (!(this.app as any).isVimEnabled())
 			return;
 		let view = this.getActiveView();
 		if (view) {
-			const cmEditor = this.getCodeMirror(view);
+			const cmEditor: Editor = this.getCodeMirror(view);
 
 			// See https://codemirror.net/doc/manual.html#vimapi_events for events.
 			this.isInsertMode = false;
@@ -189,14 +190,14 @@ export default class VimrcPlugin extends Plugin {
 				this.updateVimStatusBar();
 
 			if (!cmEditor) return;
-			cmEditor.off('vim-mode-change', this.logVimModeChange);
-			cmEditor.on('vim-mode-change', this.logVimModeChange);
+			cmEditor.off('vim-mode-change' as any, this.logVimModeChange);
+			cmEditor.on('vim-mode-change' as any, this.logVimModeChange);
 
 			this.currentKeyChord = [];
-			cmEditor.off('vim-keypress', this.onVimKeypress);
-			cmEditor.on('vim-keypress', this.onVimKeypress);
-			cmEditor.off('vim-command-done', this.onVimCommandDone);
-			cmEditor.on('vim-command-done', this.onVimCommandDone);
+			cmEditor.off('vim-keypress' as any, this.onVimKeypress);
+			cmEditor.on('vim-keypress' as any, this.onVimKeypress);
+			cmEditor.off('vim-command-done' as any, this.onVimCommandDone);
+			cmEditor.on('vim-command-done' as any, this.onVimCommandDone);
 			CodeMirror.off(cmEditor.getInputField(), 'keydown', this.onKeydown);
 			CodeMirror.on(cmEditor.getInputField(), 'keydown', this.onKeydown);
 		}
@@ -299,8 +300,8 @@ export default class VimrcPlugin extends Plugin {
 			}
 
 			if (cmEditor) {
-				cmEditor.off('vim-mode-change', this.logVimModeChange);
-				cmEditor.on('vim-mode-change', this.logVimModeChange);
+				cmEditor.off('vim-mode-change' as any, this.logVimModeChange);
+				cmEditor.on('vim-mode-change' as any, this.logVimModeChange);
 				CodeMirror.off(cmEditor.getInputField(), 'keydown', this.onKeydown);
 				CodeMirror.on(cmEditor.getInputField(), 'keydown', this.onKeydown);
 			}
@@ -345,6 +346,24 @@ export default class VimrcPlugin extends Plugin {
 			if (value && cm) {
 				cm.setOption('tabSize', value);
 			}
+		});
+
+		vimObject.defineEx('contextmenu', '', (cm: Editor) => {
+			const cursorPos = cm.getCursor(); // { line: number, ch: number }
+
+			// Get the screen/page coordinates of that position:
+			const coords = cm.charCoords(cursorPos, 'page');
+
+			// Build a contextmenu event at those coordinates:
+			const event = new MouseEvent('contextmenu', {
+				bubbles: true,
+				cancelable: true,
+				clientX: coords.left,
+				clientY: coords.top,
+			});
+
+			// Dispatch the event on the editor’s wrapper element:
+			cm.getWrapperElement().dispatchEvent(event);
 		});
 
 		vimObject.defineEx('iunmap', '', (cm: any, params: any) => {
@@ -593,10 +612,10 @@ export default class VimrcPlugin extends Plugin {
 			if (!view) return;
 			let cmEditor = this.getCodeMirror(view);
 			// See https://codemirror.net/doc/manual.html#vimapi_events for events.
-			cmEditor.off('vim-keypress', this.onVimKeypress);
-			cmEditor.on('vim-keypress', this.onVimKeypress);
-			cmEditor.off('vim-command-done', this.onVimCommandDone);
-			cmEditor.on('vim-command-done', this.onVimCommandDone);
+			cmEditor.off('vim-keypress' as any, this.onVimKeypress);
+			cmEditor.on('vim-keypress' as any, this.onVimKeypress);
+			cmEditor.off('vim-command-done' as any, this.onVimCommandDone);
+			cmEditor.on('vim-command-done' as any, this.onVimCommandDone);
 		}
 	}
 
